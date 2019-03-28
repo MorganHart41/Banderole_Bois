@@ -44,33 +44,32 @@ public:
     MailBox();
     ~MailBox();
 
-    bool RX_Ready() const   { return bRX_Ready; }
-    bool TX_Ready() const   { return bTX_Ready; }
-
-    MailboxState_T MailboxState() const { return stMailboxState; }
+    MailboxState_T MailboxState() const { return stTXState; }
 
     RX_Message & RX()
     {
-        //Clear RX_Ready to show that the message has been seen
-        bRX_Ready = false;
         return mRX; 
     }
 
-    TX_Message & TX() { return mTX; }
-
-    void Reset_TimeoutCounter()     { nTimeoutCounter = 0; }
     void Set_Recovery()             { stMailboxState = MailboxState_T::eRecovery; }
-    void Set_RX(RX_Message & oRX)   { mRX = oRX; }
-    void Set_RX_Event()             { bRX_Event = true; }
 
     void Set_TX(TX_Message & oTX)    
     {
         //Set TX_Ready to true to show that a new message has been set
-        bTX_Ready = true;
+        bStartup = false;
         mTX = oTX;
     }
 
-    static void runFrame_USB(MailBox & mMailbox);
+protected:
+
+    //Protected Functions
+    void Process_RX();
+    void Process_TX();
+    void RX();
+    void TX();
+
+    //Protected Members
+    uint8_t nBytesReceived, nBytesSent;
 
 private:
 
@@ -102,65 +101,34 @@ private:
 
     bool RX_Buf_Ready() const { return bRX_Buf_Ready; }
 
-    bool Check_RX_Event()
-    {
-        if(bRX_Event)
-        {
-            bRX_Event = false;
-            return true;
-        }
-        else
-            return false;
-    }
-
-    bool Check_Timeout()
-    {
-        if(nTimeoutCounter >= _LOC_TIMEOUT_MS)
-        {
-            Reset_TimeoutCounter();
-            return true;
-        }
-        else
-            return false;
-        
-    }
-
     bool TX_Buf_Ready() const { return bTX_Buf_Ready;}
 
     bool checkCRC(Letter_T & lLetter);
 
-    int RX_USB(Letter_T & lLetter);
     uint16_t computeCRC(Letter_T & lLetter);
     uint16_t computeCRC(char * cStr, int nLen);
 
     MailboxState_T updateStateMachine();
 
     void Clear_TX_Ready()                               { bTX_Ready = false; }
-    void induce_LOC()                                   { bLOC_Induced = true; }
     void Set_RX_Ready()                                 { bRX_Ready = true; }
     void Set_RX_Buf_Ready(const bool bStatus)           { bRX_Buf_Ready = bStatus; }
     void Set_TX_Buf_Ready(const bool bStatus)           { bTX_Buf_Ready = bStatus; }
-    void Update_TimeoutCounter(unsigned long nMillis)   { nTimeoutCounter += nMillis; }
 
-    void Process_RX();
-    void Process_TX();
-    void RX_USB();
-    void TX_USB();
-    void TX_USB(Letter_T & lLetter);
-
-    //Private Operator Overloads
+    virtual void RX_Specific(Letter_T & lLetter) = 0;    //Pure virtual function to define the RX subroutine specific to the supporting platform
+    virtual void TX_Specific(Letter_T & lLetter) = 0;    //Pure virtual function to define the TX subroutine specific to the supporting platform
 
     //Private Members
-    bool bRX_Ready, bTX_Ready, bRX_Buf_Ready, bTX_Buf_Ready;                       //Flags for message timing
-    bool bRX_Event, bLOC_Induced;
-    char cRX_Buf[_RX_MESSAGE_LENGTH_NORMAL], cTX_Buf[_TX_MESSAGE_LENGTH_NORMAL];   //Char buffers for serial messaging
+    bool bRX_Buf_Ready, bTX_Buf_Ready;                                              //Flags for message timing
+    bool bLOC_Induced, bStartup;
+    char cRX_Buf[_RX_MESSAGE_LENGTH_NORMAL], cTX_Buf[_TX_MESSAGE_LENGTH_NORMAL];    //Char buffers for serial messaging
     unsigned long nTimeoutCounter;
-    uint8_t nTX_Message_Length, nRX_Message_Length;                                //Dynamic message size depending on the mailbox status
-    uint32_t nMasterSequenceNum;
+    uint8_t nTX_Message_Length, nRX_Message_Length;                                 //Dynamic message size depending on the mailbox status
+    uint32_t nRXSequenceNum;
 
-    MailboxState_T stMailboxState, stMasterState;
-    RX_Message mRX;     //RX Message structure
-    TX_Message mTX;     //TX Message structure
+    MailboxState_T stTXState, stRXState;
+    RX_Message mRX;                                 //RX Message structure
+    TX_Message mTX;                                 //TX Message structure
 };
 
 #endif

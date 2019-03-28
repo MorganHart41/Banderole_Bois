@@ -1,53 +1,42 @@
 #include <Arduino_FreeRTOS.h>
-#include "Mailbox.h"
-
-//  Global Definitions  /////////////////////////////////////////////////////////////
-
-MailBox g_Mailbox;
-RX_Message g_RX;
-TX_Message g_TX;
+#include "ArduinoMailbox.h"
 
 //  Task Definitions  ///////////////////////////////////////////////////////////////
 
 void Task_Main(void * pvParameters)
 {
+  //Mailbox task handler and message objects
+  RX_Message rx;
+  TX_Message tx;
+  ArduinoMailbox mailbox;
+  
+  //Launch the mailbox task
+  mailbox.Initialize();
+  
   //Infinite Loop
   while(1)
   {
     //Check for serial availability
-    if (Serial.available())
-      g_Mailbox.Set_RX_Event();
+    if (Serial.available())                //If the serial RX flag has been set
+      xSemaphoreGive(mailbox.RX_Event());    //Post the RX_Event semaphore for mailbox to receive the message
   
-    //Record new command message if available
-    if (g_Mailbox.RX_Ready())
+    //Check for new processed RX message
+    if (xSemaphoreTake(mailbox.RX_Ready, 0) == pdPASS)  //If the RX_Ready semaphore for mailbox is posted
     {
-      g_RX = g_Mailbox.RX();
+      rx = g_Mailbox.RX();
   
       //TODO
+      //Update state data to the system
       //Update command data to the system as appropriate
     }
   
     //TODO
-    //Once all sensor data has been updated, compile TX message
+    //Once all sensor and axis data has been updated, compile TX message
   
-    //Update mailbox with new TX message
-    g_Mailbox.Set_TX(g_TX);
+    //Update mailbox with new TX message, then post the TX_Ready semaphore for mailbox
+    mailbox.Set_TX(tx);
+    xSemaphoreGive(mailbox.TX_Ready());
   }
-}
-
-void Task_Mailbox(void * pvParameters)
-{
-  //Infinite Loop
-  while(1)
-  {
-    //Run Mailbox frame
-    MailBox::runFrame_USB(g_Mailbox);
-  }
-}
-
-void Task_MotorControl(void * pvParameters)
-{
-  
 }
 
 //  Startup ////////////////////////////////////////////////////////////////////////
@@ -64,13 +53,6 @@ void setup()
               NULL,       //No parameters passed in
               1,          //Priority of 1
               NULL);      //No handle for this task
-
-  xTaskCreate(Task_Mailbox, //Mailbox Thread
-              "Mailbox",    //English name for humans
-              100,          //Stack depth of 100 layers
-              NULL,
-              2,            //Priority of 2
-              NULL);
 
   //Start scheduler to begin task execution
   vTaskStartScheduler();
