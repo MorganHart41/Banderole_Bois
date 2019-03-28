@@ -5,7 +5,7 @@
 TB_Stepper::TB_Stepper(int pul, int dir, int en) {
   this->pul = pul;
   this->dir = dir;
-  this0->en = en;
+  this->en = en;
 }
 
 // Initialize the stepper motor
