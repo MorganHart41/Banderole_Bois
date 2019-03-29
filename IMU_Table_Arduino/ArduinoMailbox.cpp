@@ -1,5 +1,11 @@
 #include "ArduinoMailbox.h"
 
+//Semaphores for ArduinoMailbox task synchronization
+static SemaphoreHandle_t semRX_Event, semRX_Ready, semRX_Updated, semTX_Ready, semTX_Updated;
+
+//Global Arduino Mailbox
+ArduinoMailbox g_Mailbox;
+
 //  ArduinoMailbox -- Public Functions ////////////////////////////////////////////////////////////
 
 /*-------------------------------------------------------------------------------------------------
@@ -8,15 +14,31 @@
 
 ArduinoMailbox::ArduinoMailbox()
 {
-    //Call base constructor
-    MailBox();
+}
 
-    //Initialize semaphores
-    semRX_Event = xSemaphoreCreateBinary();
-    semRX_Ready = xSemaphoreCreateBinary();
-    semRX_Updated = xSemaphoreCreateBinary();
-    semTX_Ready = xSemaphoreCreateBinary();
-    semTX_Updated = xSemaphoreCreateBinary();
+static SemaphoreHandle_t ArduinoMailbox::RX_Event()
+{
+  return semRX_Event;
+}
+
+static SemaphoreHandle_t ArduinoMailbox::RX_Ready()
+{
+  return semRX_Ready;
+}
+
+static SemaphoreHandle_t ArduinoMailbox::TX_Ready()
+{
+  return semTX_Ready;
+}
+
+static RX_Message & ArduinoMailbox::Get_RX()
+{
+  return g_Mailbox.Get_RX();
+}
+
+static void ArduinoMailbox::Set_TX(TX_Message & oTX)
+{
+  g_Mailbox.Set_TX(oTX);
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -28,29 +50,36 @@ ArduinoMailbox::ArduinoMailbox()
 
     OUTPUT (void)
 */
-void ArduinoMailbox::Initialize()
+static void ArduinoMailbox::Initialize()
 {
+    //Initialize semaphores
+    semRX_Event = xSemaphoreCreateBinary();
+    semRX_Ready = xSemaphoreCreateBinary();
+    semRX_Updated = xSemaphoreCreateBinary();
+    semTX_Ready = xSemaphoreCreateBinary();
+    semTX_Updated = xSemaphoreCreateBinary();
+  
     //Launch tasks
     xTaskCreate(Task_Main,      //Mailbox main thread
-                "Mailbox_Main," //English name for humans
+                "Mailbox_Main", //English name for humans
                 0,              //Stack depth of minimum size allowed
                 NULL,           //No parameters passed in
                 3,              //Priority of 3
-                NULL);          //No handler for this task
+                NULL);   //No handler for this task
 
     xTaskCreate(Task_RX,        //Mailbox RX thread
-                "Mailbox_RX,"   //English name for humans
+                "Mailbox_RX",   //English name for humans
                 100,            //Stack depth of 100 layers
                 NULL,           //No parameters passed in
                 2,              //Priority of 2
-                NULL);          //No handler for this task
+                NULL);     //No handler for this task
 
     xTaskCreate(Task_TX,        //Mailbox TX thread
-                "Mailbox_TX,"   //English name for humans
+                "Mailbox_TX",   //English name for humans
                 100,            //Stack depth of 100 layers
                 NULL,           //No parameters passed in
                 2,              //Priority of 2
-                NULL);          //No handler for this task
+                NULL);     //No handler for this task
 }
 
 /*-------------------------------------------------------------------------------------------------
@@ -65,16 +94,16 @@ void ArduinoMailbox::Initialize()
 
     OUTPUT (void)
 */
-void ArduinoMailbox::Task_Main(void * vParameters)
+static void ArduinoMailbox::Task_Main(void * vParameters)
 {
     //Infinite loop
     while(1)
     {
         //Pend on RX_Updated semaphore
-        xSemaphoreTake(semRX_Updated, 0)
+        xSemaphoreTake(semRX_Updated, 0);
 
         //Update the mailbox statemachine
-        updateStateMachine();
+        g_Mailbox.updateStateMachine();
 
         //Post the TX_Updated semaphore
         xSemaphoreGive(semTX_Updated);
@@ -93,7 +122,7 @@ void ArduinoMailbox::Task_Main(void * vParameters)
 
     OUTPUT (void)
 */
-void ArduinoMailbox::Task_RX(void * vParameters)
+static void ArduinoMailbox::Task_RX(void * vParameters)
 {
     //Infinite loop
     while(1)
@@ -102,13 +131,14 @@ void ArduinoMailbox::Task_RX(void * vParameters)
         if(xSemaphoreTake(semRX_Event, pdMS_TO_TICKS(_LOC_TIMEOUT_MS)) == pdPASS)   //If the semaphore was grabbed
         {
             //RX message and process
-            RX();
-            Process_RX();
+            g_Mailbox.RX();
+            g_Mailbox.Process_RX();
 
             xSemaphoreGive(semRX_Ready);
+			      xSemaphoreGive(semRX_Updated);
         }
         else
-            induce_LOC();   //If we haven't received a message in 100ms, induce Loss of Coms
+            g_Mailbox.Induce_LOC();   //If we haven't received a message in 100ms, induce Loss of Coms
     }
 }
 
@@ -127,77 +157,22 @@ void ArduinoMailbox::Task_RX(void * vParameters)
     
     OUTPUT (void)
 */
-void ArduinoMailbox::Task_TX(void * vParameters)
+static void ArduinoMailbox::Task_TX(void * vParameters)
 {
     //Infinite loop
     while(1)
     {
-        //Pend on the TX-Updated and TX_Ready semaphores. Order matters
-        xSemaohoreTake(semTX_Updated, 0);
+        //Pend on the TX-Updated and TX_Ready semaphores. Order matters.
+        xSemaphoreTake(semTX_Updated, 0);
         xSemaphoreTake(semTX_Ready, 0);
 
         //Process and transmit message
-        Process_TX();
-        TX();
+        g_Mailbox.Process_TX();
+        g_Mailbox.TX();
     }
 }
 
 //  ArduinoMailbox -- Private Functions ///////////////////////////////////////////////////////////
-
-/*-------------------------------------------------------------------------------------------------
-    RX_Specific
-
-    Overloaded pure virtual function from Mailbox. Follows the specific protocols for receiving a
-    message from the other device on the current operating platform.
-
-    INPUT (Letter_T &)  --  lLetter
-                            Unpopulated letter ready to be filled with the incoming data. Passed by
-                            reference.
-
-    OUTPUT (void)
-*/
-void ArduinoMailbox::RX_Specific(Letter_T & lLetter)
-{
-    nBytesReceived = RX_USB(lLetter);
-}
-
-/*-------------------------------------------------------------------------------------------------
-    TX_Specific
-
-    Overloaded pure virtual function from Mailbox. Follows the specific protocols for transmitting 
-    a message to the other device on the current operating platform.
-
-    INPUT (Letter_T &)  --  lLetter
-                            Populated letter ready for transmission. Passed by reference.
-    
-    OUTPUT (void)
-*/
-void ArduinoMailbox::TX_Specific(Letter_T & lLetter)
-{
-    nBytesSent = TX_USB(lLetter);
-}
-
-/*-------------------------------------------------------------------------------------------------
-    TX_USB
-
-    Subroutine for transmitting a message to the other device via the Arduino's USB port.
-
-    INPUT (Letter_T)  --  lLetter
-        A populated letter structure that needs to be transmitted. Passed by reference.
-
-    OUPUT (void)
-*/
-int ArduinoMailBox::TX_USB(Letter_T & lLetter)
-{
-    Serial.write(lLetter.cMessageType);
-    Serial.write(lLetter.nMessageLength);
-    Serial.write(lLetter.cData);
-    Serial.write(lLetter.nCRC);
-    Serial.write(lLetter.nStopByte);
-
-    //Return the size of the letter plus the length of the cData string minus the size of the cData poiner
-    return sizeof(lLetter) + strlen(lLetter.cData) - sizeof(lLetter.cData);
-}
 
 /*-------------------------------------------------------------------------------------------------
     RX_USB
@@ -210,7 +185,7 @@ int ArduinoMailBox::TX_USB(Letter_T & lLetter)
     OUTPUT (int)
         Returns the number of characters that was read in through the serial event.
 */
-int ArduinoMailBox::RX_USB(Letter_T & lLetter)
+int ArduinoMailbox::RX_USB(Letter_T & lLetter)
 {
     //Else continue to fill up the buffer
     int i = 0;
@@ -244,4 +219,59 @@ int ArduinoMailBox::RX_USB(Letter_T & lLetter)
 
     //Return the number of bytes read in
     return i;
+}
+
+/*-------------------------------------------------------------------------------------------------
+    TX_USB
+
+    Subroutine for transmitting a message to the other device via the Arduino's USB port.
+
+    INPUT (Letter_T)  --  lLetter
+        A populated letter structure that needs to be transmitted. Passed by reference.
+
+    OUPUT (void)
+*/
+int ArduinoMailbox::TX_USB(Letter_T & lLetter)
+{
+    Serial.write(lLetter.cMessageType);
+    Serial.write(lLetter.nMessageLength);
+    Serial.write(lLetter.cData);
+    Serial.write(lLetter.nCRC);
+    Serial.write(lLetter.nStopByte);
+
+    //Return the size of the letter plus the length of the cData string minus the size of the cData poiner
+    return sizeof(lLetter) + strlen(lLetter.cData) - sizeof(lLetter.cData);
+}
+
+/*-------------------------------------------------------------------------------------------------
+    RX_Specific
+
+    Overloaded pure virtual function from Mailbox. Follows the specific protocols for receiving a
+    message from the other device on the current operating platform.
+
+    INPUT (Letter_T &)  --  lLetter
+                            Unpopulated letter ready to be filled with the incoming data. Passed by
+                            reference.
+
+    OUTPUT (void)
+*/
+void ArduinoMailbox::RX_Specific(Letter_T & lLetter)
+{
+    nBytesReceived = RX_USB(lLetter);
+}
+
+/*-------------------------------------------------------------------------------------------------
+    TX_Specific
+
+    Overloaded pure virtual function from Mailbox. Follows the specific protocols for transmitting 
+    a message to the other device on the current operating platform.
+
+    INPUT (Letter_T &)  --  lLetter
+                            Populated letter ready for transmission. Passed by reference.
+    
+    OUTPUT (void)
+*/
+void ArduinoMailbox::TX_Specific(Letter_T & lLetter)
+{
+    nBytesSent = TX_USB(lLetter);
 }

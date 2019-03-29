@@ -44,14 +44,11 @@ public:
     MailBox();
     ~MailBox();
 
+    RX_Message & Get_RX()   { return mRX; }
+
     MailboxState_T MailboxState() const { return stTXState; }
 
-    RX_Message & RX()
-    {
-        return mRX; 
-    }
-
-    void Set_Recovery()             { stMailboxState = MailboxState_T::eRecovery; }
+    void Set_Recovery()             { stTXState = MailboxState_T::eRecovery; }
 
     void Set_TX(TX_Message & oTX)    
     {
@@ -62,17 +59,7 @@ public:
 
 protected:
 
-    //Protected Functions
-    void Process_RX();
-    void Process_TX();
-    void RX();
-    void TX();
-
-    //Protected Members
-    uint8_t nBytesReceived, nBytesSent;
-
-private:
-
+    //Protected Structs
     typedef struct Letter_T
     {
         //Message header
@@ -86,6 +73,22 @@ private:
         //Stop byte
         const uint8_t nStopByte = 0xE7;
     };
+    
+    //Protected Functions
+    MailboxState_T updateStateMachine();
+
+    void Induce_LOC()   { bLOC_Induced = true; }
+    void Process_RX();
+    void Process_TX();
+    void RX();
+    void TX();
+
+    //Protected Members
+    uint8_t nTX_Message_Length, nRX_Message_Length;   //Dynamic message size depending on the mailbox status
+    uint8_t nBytesReceived, nBytesSent;
+    uint32_t nRXSequenceNum;
+
+private:
 
     //Private Functions
     bool is_LOC(MailboxState_T stState)
@@ -99,32 +102,17 @@ private:
             return false;
     }
 
-    bool RX_Buf_Ready() const { return bRX_Buf_Ready; }
-
-    bool TX_Buf_Ready() const { return bTX_Buf_Ready;}
-
     bool checkCRC(Letter_T & lLetter);
 
     uint16_t computeCRC(Letter_T & lLetter);
     uint16_t computeCRC(char * cStr, int nLen);
-
-    MailboxState_T updateStateMachine();
-
-    void Clear_TX_Ready()                               { bTX_Ready = false; }
-    void Set_RX_Ready()                                 { bRX_Ready = true; }
-    void Set_RX_Buf_Ready(const bool bStatus)           { bRX_Buf_Ready = bStatus; }
-    void Set_TX_Buf_Ready(const bool bStatus)           { bTX_Buf_Ready = bStatus; }
-
+    
     virtual void RX_Specific(Letter_T & lLetter) = 0;    //Pure virtual function to define the RX subroutine specific to the supporting platform
     virtual void TX_Specific(Letter_T & lLetter) = 0;    //Pure virtual function to define the TX subroutine specific to the supporting platform
 
-    //Private Members
-    bool bRX_Buf_Ready, bTX_Buf_Ready;                                              //Flags for message timing
+    //Private Members                                          //Flags for message timing
     bool bLOC_Induced, bStartup;
     char cRX_Buf[_RX_MESSAGE_LENGTH_NORMAL], cTX_Buf[_TX_MESSAGE_LENGTH_NORMAL];    //Char buffers for serial messaging
-    unsigned long nTimeoutCounter;
-    uint8_t nTX_Message_Length, nRX_Message_Length;                                 //Dynamic message size depending on the mailbox status
-    uint32_t nRXSequenceNum;
 
     MailboxState_T stTXState, stRXState;
     RX_Message mRX;                                 //RX Message structure
