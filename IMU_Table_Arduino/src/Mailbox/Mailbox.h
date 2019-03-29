@@ -48,7 +48,7 @@ public:
 
     MailboxState_T MailboxState() const { return stTXState; }
 
-    void Set_Recovery()             { stTXState = MailboxState_T::eRecovery; }
+    void Set_Recovery() { stTXState = MailboxState_T::eRecovery; }
 
     void Set_TX(TX_Message & oTX)    
     {

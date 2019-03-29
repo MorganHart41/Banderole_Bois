@@ -16,16 +16,43 @@ ArduinoMailbox::ArduinoMailbox()
 {
 }
 
+/*-------------------------------------------------------------------------------------------------
+    RX_Event
+
+    Returns the semaphore handler for semRX_Event within the ArduinoMailbox.
+
+    INPUT   --  NONE
+
+    OUTPUT (void)
+*/
 static SemaphoreHandle_t ArduinoMailbox::RX_Event()
 {
   return semRX_Event;
 }
 
+/*-------------------------------------------------------------------------------------------------
+    RX_Ready
+
+    Returns the semaphore handler for semRX_Ready within the ArduinoMailbox.
+
+    INPUT   --  NONE
+
+    OUTPUT (void)
+*/
 static SemaphoreHandle_t ArduinoMailbox::RX_Ready()
 {
   return semRX_Ready;
 }
 
+/*-------------------------------------------------------------------------------------------------
+    TX_Ready
+
+    Returns the semaphore handler for semTX_Ready within the ArduinoMailbox.
+
+    INPUT   --  NONE
+
+    OUTPUT (void)
+*/
 static SemaphoreHandle_t ArduinoMailbox::TX_Ready()
 {
   return semTX_Ready;

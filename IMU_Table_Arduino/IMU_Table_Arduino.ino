@@ -19,8 +19,8 @@ void Task_Main(void * pvParameters)
   while(1)
   {
     //Check for serial availability
-    if (Serial.available())                //If the serial RX flag has been set
-      xSemaphoreGive(ArduinoMailbox::RX_Event());    //Post the RX_Event semaphore for mailbox to receive the message
+    if (Serial.available())                       //If the serial RX flag has been set
+      xSemaphoreGive(ArduinoMailbox::RX_Event());   //Post the RX_Event semaphore for mailbox to receive the message
   
     //Check for new processed RX message
     if (xSemaphoreTake(ArduinoMailbox::RX_Ready(), 0) == pdPASS)  //If the RX_Ready semaphore for mailbox is posted

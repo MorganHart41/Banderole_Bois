@@ -1,25 +1,41 @@
 #ifndef TB_Stepper_h
 #define TB_Stepper_h
 
-#include "Arduino.h"
-//extern bool dir = true;     // Make direction variable external
+#include <Arduino.h>
+#include <stdint.h>
 
-// Define stepper motor x pins
-//#define PUL_X      6  //define Pulse pin for x axis
-//#define DIR_X      5  //define Direction pin for x axis
-//#define EN_X       4  //define Enable Pin for x axis
+#include "src/Arduino_freeRTOS/Arduino_FreeRTOS.h"
+#include "src/Arduino_freeRTOS/task.h"
 
-// Define XY_plotter class
-class TB_Stepper {
+class TB_Stepper 
+{
 public:
-  TB_Stepper(int pul = 6, int dir = 5, int en = 4);
-  void init();
-  void step(int steps, int rpm);
+
+  //Public Functions
+  TB_Stepper();
+
+  void Set_Enable(const bool bEnable)                   { bEnabled = bEnable; }
+  void Set_StepsPerSecond(const float fStepsPerSecond)  { this->fStepsPerSecond = fStepsPerSecond; }
+
+  void Initialize(int nPulse, int nDirection, int nEnable);
+  void Step(int steps);
+
+  static void Set_Enable(TB_Stepper & stepperInstance, const bool bEnable);
+  static void Set_StepsPerSecond(TB_Stepper & stepperInstance, const float fStepsPerSecond);
+
+  //Tasks
+  static void Task_Step(void * vParameters);
 
 private:
-  int pul;
-  int dir;
-  int en;
+
+  //Private Functions
+  bool Toggle();
+
+  //Private Members
+  bool bEnabled;
+  int nPulsePin, nDirectionPin, nEnablePin;
+  uint32_t nSteps;
+  float fStepsPerSecond;
 
 };
 

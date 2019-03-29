@@ -2,9 +2,11 @@
 #define ARDUINOMAILBOX_H
 
 #include <string.h>
+
 #include "src/Arduino_freeRTOS/Arduino_FreeRTOS.h"
 #include "src/Arduino_freeRTOS/task.h"
 #include "src/Arduino_freeRTOS/semphr.h"
+
 #include "src/Mailbox/Mailbox.h"
 
 class ArduinoMailbox : MailBox
@@ -24,6 +26,7 @@ static SemaphoreHandle_t TX_Ready();
 
 static void Initialize();
 
+//Tasks
 static void Task_Main(void * vParameters);
 static void Task_RX(void * vParameters);
 static void Task_TX(void * vParameters);

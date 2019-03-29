@@ -1,7 +1,7 @@
 #ifndef MESSAGE_STRUCTURE_H
 #define MESSAGE_STRUCTURE_H
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 #define _RX_MESSAGE_LENGTH_NORMAL   sizeof(RX_Message::RX_Message_Structure_Normal_T)
 #define _RX_MESSAGE_LENGTH_RECOVERY sizeof(RX_Message::RX_Message_Structure_Recovery_T)
