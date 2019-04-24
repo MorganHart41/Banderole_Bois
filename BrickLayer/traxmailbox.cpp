@@ -313,11 +313,11 @@ int TraxMailbox::initCal(char calType) {
     uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 18
     // set total cal points to 12 if mag cal selected
     if (calType == 'm') {
-        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0xC};  // payload to set cal points to 12
+        calPointPayloadSet[4] = 0xC;  // payload to set cal points to 12
     }
     // set total cal points to 18 if accel or mag + accel cal selected
     else if (calType == 'a' || calType == 'o') {
-        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 18
+        calPointPayloadSet[4] = 0x12;  // payload to set cal points to 18
     } else {
         return -1;
     }
@@ -453,13 +453,13 @@ int TraxMailbox::startCal(char calType) {
     uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E};
     // payload to start cal in mag and accel mode
     if (calType == 'm') {
-        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x0A}; // start cal in mag mode
+        startCalPayload[3] = 0x0A; // start cal in mag mode
     }
     else if (calType == 'a') {
-        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x64}; // start cal in accel mode
+        startCalPayload[3] = 0x64; // start cal in accel mode
     }
     else if (calType == 'o') {
-        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E}; // start accel and mag mode
+        startCalPayload[3] = 0x6E; // start accel and mag mode
     }
     else {
         return -1;
