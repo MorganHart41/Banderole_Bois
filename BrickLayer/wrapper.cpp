@@ -102,6 +102,7 @@ char Wrapper::automatedOrManual(){
             return 'm';
         }
         else{
+            std::cin.ignore('/n');
             printMessage("Please Type Either 'm' or 'a'");
         }
     }
@@ -162,6 +163,7 @@ char Wrapper::accelOrMagOrAccelMag(){
             return 'o';
         }
         else{
+            std::cin.ignore('/n');
             printMessage("Please Type Either 'm' or 'a' or 'o'");
         }
     }
