@@ -51,7 +51,7 @@ public:
 /*********************************************************
 *                 WRAPPER SPECIFIC METHODS               *
 **********************************************************/
-    bool checkFinalStep();
+    bool checkFinalStep(char userChoice);
     void updateDesiredSubPosition();
     bool comparePointValues();
     bool calibrationInit(char userChoice);
@@ -71,8 +71,8 @@ public:
 /*********************************************************
 *                   TRAX USE METHODS                     *
 **********************************************************/
-    bool initTraxSettings();
-    bool startTraxCalibration();
+    bool initTraxSettings(char userChoice);
+    bool startTraxCalibration(char userChoice);
     bool takeTraxPoint(char passedCal);
     bool getTraxCalScore();
     bool setDefaultTraxSettings();

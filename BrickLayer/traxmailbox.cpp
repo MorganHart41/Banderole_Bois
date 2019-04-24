@@ -130,7 +130,7 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
         sizeRead = serPort.read(data, responseSize);
         i++;
     }
-    std::cout << "Read In Size: " << test << std::endl;
+    std::cout << "Read In Size: " << sizeRead << std::endl;
     uint16_t packet_len;
     memcpy(&packet_len, &data, 2);
     packet_len = ntohs(packet_len);
@@ -310,13 +310,14 @@ int TraxMailbox::initCal(char calType) {
     uint8_t magCoeffPayloadSet[5] = {0x12, 0x0, 0x0, 0x0, 0x0}; // payload to save to first coefff set
     uint8_t accelCoeffPayloadSet[5] ={0x13, 0x0, 0x0, 0x0, 0x0};  // payload to save to first coeff set
 
+    uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 18
     // set total cal points to 12 if mag cal selected
     if (calType == 'm') {
         uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0xC};  // payload to set cal points to 12
     }
     // set total cal points to 18 if accel or mag + accel cal selected
     else if (calType == 'a' || calType == 'o') {
-        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 12
+        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 18
     } else {
         return -1;
     }
@@ -445,15 +446,20 @@ int TraxMailbox::save() {
   * Prompts TRAX to begin calibratoin procedure by sending the start cal command
  */
 int TraxMailbox::startCal(char calType) {
-    success = -1;
+    int success = -1;
 
     Command beginCal = kStartCal;   // command to start cal
+
+    uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E};
     // payload to start cal in mag and accel mode
     if (calType == 'm') {
-        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x0A}; // 6E
+        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x0A}; // start cal in mag mode
     }
-    else if (calType == 'a' || calType == 'o') {
-        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E};
+    else if (calType == 'a') {
+        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x64}; // start cal in accel mode
+    }
+    else if (calType == 'o') {
+        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E}; // start accel and mag mode
     }
     else {
         return -1;
