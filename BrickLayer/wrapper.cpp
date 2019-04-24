@@ -7,10 +7,18 @@ Wrapper::Wrapper(){}
 **********************************************************/
 
 //Method Used To Check If We Are At The Final Step
-bool Wrapper::checkFinalStep(){
-    if(tm.getSampleCount() == 18.0){
-        printMessage("At 18th Point");
-        return true;
+bool Wrapper::checkFinalStep(char userChoice){
+    if(userChoice == 'm') {
+        if(tm.getSampleCount() == 12.0){
+            printMessage("At 12th Point");
+            return true;
+        }
+    }
+    else if (userChoice == 'a' || userChoice == 'o') {
+        if(tm.getSampleCount() == 18.0){
+            printMessage("At 18th Point");
+            return true;
+        }
     }
     return false;
 }
@@ -35,9 +43,9 @@ bool Wrapper::comparePointValues(){
 
 //Method For Calibration
 bool Wrapper::calibrationInit(char userChoice){
-    if(initTraxSettings()){
+    if(initTraxSettings(userChoice)){
         delayBy(2);
-        if(startTraxCalibration()){
+        if(startTraxCalibration(userChoice)){
             delayBy(2);
             return true;
         }
@@ -115,8 +123,8 @@ void Wrapper::automatedLogic(){
 
         //Update Variables To Wrapper Level
         if(comparePointValues()){
-            if(takeTraxPoint('a')){
-                if(checkFinalStep()){
+            if(takeTraxPoint('o')){
+                if(checkFinalStep('o')){
                     printMessage("********************************************************");
                     if(getTraxCalScore()){
                         if(setDefaultTraxSettings()){
@@ -164,7 +172,7 @@ void Wrapper::accelCalibration(){
         printMessage("********************************************************");
         enterButtonDelay();
         if(takeTraxPoint('a')){ //18
-            if(checkFinalStep()){ //How Many Nums Here?
+            if(checkFinalStep('a')){ //How Many Nums Here?
                 printMessage("********************************************************");
                 if(getTraxCalScore()){ //Change To Grab Variable?
                     if(setDefaultTraxSettings()){
@@ -207,8 +215,8 @@ void Wrapper:: accelMagCalibration(){
     while(1){
         printMessage("********************************************************");
         enterButtonDelay();
-        if(takeTraxPoint('a')){
-            if(checkFinalStep()){
+        if(takeTraxPoint('o')){ //18
+            if(checkFinalStep('o')){
                 printMessage("********************************************************");
                 if(getTraxCalScore()){ //Change To Grab Variable?
                     if(setDefaultTraxSettings()){
@@ -267,10 +275,10 @@ void Wrapper::printArduinoData(){
 **********************************************************/
 
 //Method Used To Initialize Trax Settings And Handle Errors Thrown
-bool Wrapper::initTraxSettings(){
+bool Wrapper::initTraxSettings(char userChoice){
     printMessage("********************************************************");
     printMessage("initCal: ");
-    int results = tm.initCal();
+    int results = tm.initCal(userChoice);
     if(results == -1){
         std::cout << "Error: Init Of Calibration Failed" << std::endl;
         return false;
@@ -279,14 +287,15 @@ bool Wrapper::initTraxSettings(){
 }
 
 //Method Used For Starting The Trax Calibration Procedure
-bool Wrapper::startTraxCalibration(){
+bool Wrapper::startTraxCalibration(char userChoice){
     printMessage("********************************************************");
     printMessage("startCal: ");
     try{ //Try A startCal
-        int startCalCheck = tm.startCal();
+        int startCalCheck = tm.startCal(userChoice);
         if(startCalCheck == -1){
             return false;
         }
+
         return true; //Positive Return
     }
     catch(...){
@@ -297,7 +306,7 @@ bool Wrapper::startTraxCalibration(){
 
 //Method For Taking A Point For The Trax
 bool Wrapper::takeTraxPoint(char passedCal){
-    int results = tm.takePoint();
+    int results = tm.takePoint(passedCal);
     for(int i = 0; i < 10; i++){ //Loop For Attempting 10 Times
         if(results == 0){ //Check If Pass
             std::cout << "Taken Point: " << tm.getSampleCount() << std::endl;
