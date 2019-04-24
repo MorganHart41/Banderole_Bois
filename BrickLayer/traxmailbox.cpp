@@ -121,13 +121,13 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
 //        return -1;
 //    }
 
-    size_t test = serPort.read(data, responseSize);
+    size_t sizeRead = serPort.read(data, responseSize);
     std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
     int i = 1;
-    while (test == 0){
+    while (sizeRead == 0 || i == 1000){
         std::cout << "Debug: Re-reading Attempt " << i << std::endl;
         usleep(100000); //0
-        test = serPort.read(data, responseSize);
+        sizeRead = serPort.read(data, responseSize);
         i++;
     }
     std::cout << "Read In Size: " << test << std::endl;
@@ -290,7 +290,7 @@ float TraxMailbox::ntohf(float data)
   * @return: 0 upon success, -1 upon failure
   *
  */
-int TraxMailbox::initCal() {
+int TraxMailbox::initCal(char calType) {
     // Commands to set and get functional mode to compas
     Command SetFunctMode = kSetFunctionalMode;
     Command getFunctMode = kGetFunctionalMode;
@@ -310,8 +310,16 @@ int TraxMailbox::initCal() {
     uint8_t magCoeffPayloadSet[5] = {0x12, 0x0, 0x0, 0x0, 0x0}; // payload to save to first coefff set
     uint8_t accelCoeffPayloadSet[5] ={0x13, 0x0, 0x0, 0x0, 0x0};  // payload to save to first coeff set
 
-    // set and get total cal points
-    uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 18
+    // set total cal points to 12 if mag cal selected
+    if (calType == 'm') {
+        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0xC};  // payload to set cal points to 12
+    }
+    // set total cal points to 18 if accel or mag + accel cal selected
+    else if (calType == 'a' || calType == 'o') {
+        uint8_t calPointPayloadSet[5] = {0xC, 0x0, 0x0, 0x0, 0x12};  // payload to set cal points to 12
+    } else {
+        return -1;
+    }
 
     // Commands to set and get data components
     Command setDataComp = kSetDataComponents;
@@ -375,7 +383,7 @@ int TraxMailbox::initCal() {
         success = -1;
     }
 
-    // set total cal points to 18
+    // if mag cal selected set total cal points to 12, if accel or mag + accel cal selected, set to 18
     write_command(setConfig, calPointPayloadSet, 5);
     success = read_command(readResp, payloadRead, 0, 5);      // Ensure setConfig finished
     if(readResp != checkConfig) {
@@ -436,11 +444,20 @@ int TraxMailbox::save() {
 /**
   * Prompts TRAX to begin calibratoin procedure by sending the start cal command
  */
-void TraxMailbox::startCal() {
+int TraxMailbox::startCal(char calType) {
+    success = -1;
+
     Command beginCal = kStartCal;   // command to start cal
     // payload to start cal in mag and accel mode
-    uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E};
-
+    if (calType == 'm') {
+        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x0A}; // 6E
+    }
+    else if (calType == 'a' || calType == 'o') {
+        uint8_t startCalPayload[4] = {0x0, 0x0, 0x0, 0x6E};
+    }
+    else {
+        return -1;
+    }
     uint8_t payloadRead[4] = {0};             // read function populates with response payload
     Command readResp;                       // read populates with frame ID of message just read
 
@@ -449,12 +466,11 @@ void TraxMailbox::startCal() {
     // write start cal
     write_command(beginCal, startCalPayload, 4);
 
-    read_command(readResp, payloadRead, 4, 9);  // (Should have payload of 4 and total length of 9)
+    success = read_command(readResp, payloadRead, 4, 9);  // (Should have payload of 4 and total length of 9)
 //    read_command(readResp, payloadTest, 100, 105);
 
     //read_command(readResp, payloadRead, 4, 9); // testing
-
-    // add in error checking if needed
+    return success;
 }
 
 /**
@@ -474,30 +490,45 @@ void TraxMailbox::abortCal() {
   * @return: 0 upon success, -1 upon failure
   *
  */
-int TraxMailbox::takePoint() {
+int TraxMailbox::takePoint(char calType) {
     Command takeCalPoint = kTakeUserCalSample;  // command to take point
     Command getSampleCount = kUserCalSampleCount;
 
     Command readResp;                       // read populates with frame ID of message just read
-    uint8_t payloadRead[4] = {0};             // read function populates with response payload
+    uint8_t payloadRead[4] = {0};           // read function populates with response payload
 
     int success = 0;
 
     // write command to take calibration point
     write_command(takeCalPoint, NULL, 0);
 
-    while(readResp != getSampleCount){
-        success = read_command(readResp, payloadRead, 4, 9);  // Ensure cal point was taken
-    }
-    // Read back user cal sample count and ensure it is one higher then the last point taken
-    if((int)payloadRead[3] == (this->sampleCount + 1)) {
-        this->sampleCount++;
-        if(this->sampleCount == 18) {
-            // All 18 calibration points taken so read for cal score
-            success = getCalScore();
+    success = read_command(readResp, payloadRead, 4, 9);  // Ensure cal point was taken
+
+    if (calType == 'm') {
+        // Read back user cal sample count and ensure it is one higher then the last point taken
+        if((int)payloadRead[3] == (this->sampleCount + 1)) {
+            this->sampleCount++;
+            if(this->sampleCount == 12) {
+                // All 18 calibration points taken so read for cal score
+                success = getCalScore();
+            }
+        } else {
+            success = -1;   // cal point was not taken
         }
-    } else {
-        success = -1;   // cal point was not taken
+    } else if (calType == 'a' || calType == 'o') {
+        // Read back user cal sample count and ensure it is one higher then the last point taken
+        if((int)payloadRead[3] == (this->sampleCount + 1)) {
+            this->sampleCount++;
+            if(this->sampleCount == 18) {
+                // All 18 calibration points taken so read for cal score
+                success = getCalScore();
+            }
+        } else {
+            success = -1;   // cal point was not taken
+        }
+    }
+    else {
+        return -1;
     }
 
     return success;
@@ -526,7 +557,7 @@ int TraxMailbox::getCalScore(){
     std::cout << "Accel Float Score: " << accelFloat << std::endl;
     std::cout << "Mag Float Score: " << magFloat <<std::endl;
     // update calSuccess bool based on success of calibration
-    if(accelFloat <= 1.0 && magFloat <= 2.0) {
+    if(accelFloat <= 2.0 && magFloat <= 2.0) {
         this->calSuccess = true;
     }
     else {

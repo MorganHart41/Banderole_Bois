@@ -59,10 +59,10 @@ public:
     }
     ~TraxMailbox();
 
-    int initCal();              // Set TRAX settings in order to calibrate
-    void startCal();            // Send the start calibration command
+    int initCal(char calType);              // Set TRAX settings in order to calibrate
+    int startCal(char calType);            // Send the start calibration command
     void abortCal();            // Send the abort calibration command
-    int takePoint();            // Take cal point
+    int takePoint(char calType);            // Take cal point
     int getCalScore();          // Request cal score from TRAX and set calSucess
     int getPosition();          // Request position data (heading, pitch, roll)
     int save();                 // Send save command
