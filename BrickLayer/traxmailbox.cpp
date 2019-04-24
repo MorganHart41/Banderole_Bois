@@ -49,7 +49,6 @@ void TraxMailbox::setSampleCount(int count) {
 */
 int TraxMailbox::write_command(const Command cmd, const uint8_t *payload, const uint16_t payload_len)
 {
-    //printf("%x\n", payload[1]);
     /*
     * Construct the PNI Binary packet protocol.
     */
@@ -83,17 +82,16 @@ int TraxMailbox::write_command(const Command cmd, const uint8_t *payload, const 
     * Write the data down the serial port.
     */
 
-    // Trying to put data into array? - BS
-    //uint8_t write_data[] = {*packet1, *packet2, *packet3, *packet4};
-    // is this only sending first packet - packet[0] = 00? - BS
-
-    serPort.write(packet, packet_len);      // Could add error checking?
+    size_t var = serPort.write(packet, packet_len);
+    if(var != packet_len)
+    {
+        ret = -1;
+    }
 
     uint8_t packetContents[20];
     for (int i = 0; i < 20; i++)
     {
         packetContents[i] = packet[i];
-        //printf("%x\n", packetContents[i]);
     }
     delete[] packet;
 
@@ -122,15 +120,19 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
 //    }
 
     size_t sizeRead = serPort.read(data, responseSize);
-    std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
+    //std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
     int i = 1;
+    std::cout << "Please wait";
     while (sizeRead == 0 || i == 1000){
-        std::cout << "Debug: Re-reading Attempt " << i << std::endl;
+        if (i%2 == 0)
+        {
+            std::cout << ".";
+        }
         usleep(100000); //0
         sizeRead = serPort.read(data, responseSize);
         i++;
     }
-    std::cout << "Read In Size: " << test << std::endl;
+    std::cout << std::endl << "Read In Size: " << test << std::endl;
     uint16_t packet_len;
     memcpy(&packet_len, &data, 2);
     packet_len = ntohs(packet_len);
@@ -141,7 +143,7 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
 
     if (packet_len > 4096)
     {
-        std::cout << "READ_COMMAND: Fail 1" << std::endl;
+        std::cout << "READ_COMMAND: Fail 1. Packet length has exceeded maximum size of 4096 bytes" << std::endl;
         return -1;
     }
 
@@ -163,7 +165,7 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
 
     if (crc != crc16(data, packet_len - 2))
     {
-        std::cout << "READ_COMMAND: Fail 2" << std::endl;
+        std::cout << "READ_COMMAND: Fail 2. The incorrect crc was detected" << std::endl;
         return -1;
     }
 
@@ -172,7 +174,7 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
     */
     if (packet_len - 5 > max_payload_length)
     {
-        std::cout << "READ_COMMAND: Fail 3" << std::endl;
+        std::cout << "READ_COMMAND: Fail 3. Payload size exceeds provided max payload length" << std::endl;
         return -1;
     }
 
@@ -464,12 +466,12 @@ int TraxMailbox::startCal(char calType) {
     uint8_t payloadTest[4096] = {0};
 
     // write start cal
-    write_command(beginCal, startCalPayload, 4);
+    int check = write_command(beginCal, startCalPayload, 4);
+    if(check == -1){
+        return -1;
+    }
+    success = read_command(readResp, payloadRead, 4, 9);  //payload of 4 and total length of 9
 
-    success = read_command(readResp, payloadRead, 4, 9);  // (Should have payload of 4 and total length of 9)
-//    read_command(readResp, payloadTest, 100, 105);
-
-    //read_command(readResp, payloadRead, 4, 9); // testing
     return success;
 }
 
