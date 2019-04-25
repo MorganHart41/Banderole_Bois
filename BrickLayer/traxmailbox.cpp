@@ -579,7 +579,7 @@ int TraxMailbox::getCalScore(char calType){
     std::cout << "Mag Float Score: " << magFloat <<std::endl;
     // update calSuccess bool based on success of calibration
     if(calType == 'o'){
-        if(accelFloat <= 2.0 && magFloat <= 2.0) {
+        if(accelFloat <= 1.0 && magFloat <= 2.0) {
             this->calSuccess = true;
         }
         else {
@@ -587,7 +587,7 @@ int TraxMailbox::getCalScore(char calType){
         }
     }
     else if(calType == 'a'){
-        if(accelFloat <= 2.0) {
+        if(accelFloat <= 1.0) {
             this->calSuccess = true;
         }
         else {
