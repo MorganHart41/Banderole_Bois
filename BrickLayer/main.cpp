@@ -18,17 +18,17 @@ int main(int argc, char *argv[])
 
         if(userChoice2 == 'a'){
             w.printMessage("SELECTED: Accel Only Calibration");
-            w.calibrationInit(userChoice2);
+            w.calibrationInit('a');
             w.accelCalibration();
         }
         else if(userChoice2 == 'm'){
             w.printMessage("SELECTED: Mag Only Calibration");
-            w.calibrationInit(userChoice2);
+            w.calibrationInit('m');
             w.magCalibration();
         }
         else{
             w.printMessage("SELECTED: AccelMag Calibration");
-            w.calibrationInit(userChoice2);
+            w.calibrationInit('o');
             w.accelMagCalibration();
         }
     }

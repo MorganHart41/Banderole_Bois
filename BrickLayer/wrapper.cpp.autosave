@@ -212,6 +212,7 @@ void Wrapper::magCalibration(){
 }
 
 void Wrapper:: accelMagCalibration(){
+
     while(1){
         printMessage("********************************************************");
         enterButtonDelay();
