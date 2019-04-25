@@ -1,7 +1,8 @@
-#include "localmailbox.h"
+#include "sendit.h"
 
-bool LocalMailbox::readRX(){
+bool SendIt::readRX(){
     try{
+
         uint8_t received[57];
         serPort1.read(received,57);
         printf("READING IN: \n");
@@ -32,29 +33,29 @@ bool LocalMailbox::readRX(){
         tempPos[1] = received[20];
         tempPos[2] = received[21];
         tempPos[3] = received[22];
-        //printf("\nX bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        printf("\nX bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         //Convert bytes To Float
-        RXArduinoX = bytesToFloat(tempPos);
+        receivedArduinoX = bytesToFloat(tempPos);
 
         // Put pos y into tempPos
         tempPos[0] = received[23];
         tempPos[1] = received[24];
         tempPos[2] = received[25];
         tempPos[3] = received[26];
-        //printf("Y bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        printf("Y bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         //Convert bytes To Float
-        RXArduinoY = bytesToFloat(tempPos);
+        receivedArduinoY = bytesToFloat(tempPos);
 
         // Put pos z into tempPos
         tempPos[0] = received[27];
         tempPos[1] = received[28];
         tempPos[2] = received[29];
         tempPos[3] = received[30];
-        //printf("Z bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        printf("Z bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         //Convert bytes To Float
-        RXArduinoZ = bytesToFloat(tempPos);
+        receivedArduinoZ = bytesToFloat(tempPos);
 
-        printf("Received X: %f, Y: %f, Z: %f\n",RXArduinoX,RXArduinoY,RXArduinoZ);
+        printf("X: %f, Y: %f, Z: %f\n",receivedArduinoX,receivedArduinoY,receivedArduinoZ);
 //---------------------------VELOCITY------------------------
         // Put vel x into tempPos
         tempPos[0] = received[31];
@@ -62,21 +63,21 @@ bool LocalMailbox::readRX(){
         tempPos[2] = received[33];
         tempPos[3] = received[34];
         //Convert bytes To Float
-        RXVelocityX = bytesToFloat(tempPos);
+        receivedVelocityX = bytesToFloat(tempPos);
         // Put vel y into tempPos
         tempPos[0] = received[35];
         tempPos[1] = received[36];
         tempPos[2] = received[37];
         tempPos[3] = received[38];
         //Convert bytes To Float
-        RXVelocityY = bytesToFloat(tempPos);
+        receivedVelocityY = bytesToFloat(tempPos);
         // Put vel z into tempPos
         tempPos[0] = received[39];
         tempPos[1] = received[40];
         tempPos[2] = received[41];
         tempPos[3] = received[42];
         //Convert bytes To Float
-        RXVelocityZ = bytesToFloat(tempPos);
+        receivedVelocityZ = bytesToFloat(tempPos);
 
         return true;
     }
@@ -85,7 +86,7 @@ bool LocalMailbox::readRX(){
     }
 }
 
-bool LocalMailbox::sendTX(){
+bool SendIt::sendTX(){
     try{
         uint8_t send[33];
         uint8_t tempPos[4];
@@ -108,8 +109,8 @@ bool LocalMailbox::sendTX(){
         send[6] = 0xF;
 
         //Convert pos x float to byte
-        floatToBytes(TXArduinoX, tempPos);
-        //printf("PASSED X = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        floatToBytes(arduinoX, tempPos);
+        printf("PASSED X = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         // set pos x data
         send[7] = tempPos[0];
         send[8] = tempPos[1];
@@ -117,8 +118,8 @@ bool LocalMailbox::sendTX(){
         send[10] = tempPos[3];
 
         //Convert pos y float to byte
-        floatToBytes(TXArduinoY, tempPos);
-        //printf("PASSED Y = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        floatToBytes(arduinoY, tempPos);
+        printf("PASSED Y = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         // set pos y data
         send[11] = tempPos[0];
         send[12] = tempPos[1];
@@ -126,8 +127,8 @@ bool LocalMailbox::sendTX(){
         send[14] = tempPos[3];
 
         //Convert pos z float to byte
-        floatToBytes(TXArduinoZ, tempPos);
-        //printf("PASSED Z = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
+        floatToBytes(arduinoZ, tempPos);
+        printf("PASSED Z = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
         // set pos z data
         send[15] = tempPos[0];
         send[16] = tempPos[1];
@@ -135,21 +136,21 @@ bool LocalMailbox::sendTX(){
         send[18] = tempPos[3];
 
         // Convert vel x to bytes
-        floatToBytes(TXVelocityX, tempPos);
+        floatToBytes(velocityX, tempPos);
         // set pos x data
         send[19] = tempPos[0];
         send[20] = tempPos[1];
         send[21] = tempPos[2];
         send[22] = tempPos[3];
         // Convert vel y to bytes
-        floatToBytes(TXVelocityY, tempPos);
+        floatToBytes(velocityY, tempPos);
         // set pos y data
         send[23] = tempPos[0];
         send[24] = tempPos[1];
         send[25] = tempPos[2];
         send[26] = tempPos[3];
         // Convert vel z to bytes
-        floatToBytes(TXVelocityZ, tempPos);
+        floatToBytes(velocityZ, tempPos);
         // set pos z data
         send[27] = tempPos[0];
         send[28] = tempPos[1];
@@ -171,7 +172,7 @@ bool LocalMailbox::sendTX(){
     }
 }
 
-void LocalMailbox::computeSequence(uint8_t sequenceArray[4]){
+void SendIt::computeSequence(uint8_t sequenceArray[4]){
     sequenceNum++;
     int tempInt = this->sequenceNum;        // temp int to store current private sequence number
 
@@ -184,7 +185,7 @@ void LocalMailbox::computeSequence(uint8_t sequenceArray[4]){
     //printf("%x %x %x %x\n", sequenceArray[0], sequenceArray[1], sequenceArray[2], sequenceArray[3]);
 }
 
-float LocalMailbox::bytesToFloat(uint8_t bytes[4]) {
+float SendIt::bytesToFloat(uint8_t bytes[4]) {
     float tempFloat = 0;
     // type cast byte array into float
     tempFloat = *(float*)(bytes);
@@ -192,16 +193,61 @@ float LocalMailbox::bytesToFloat(uint8_t bytes[4]) {
     return tempFloat;
 }
 
-void LocalMailbox::floatToBytes(float passedFloat, uint8_t bytes[4]) {
+void SendIt::floatToBytes(float passedFloat, uint8_t bytes[4]) {
     *(float*)(bytes) = passedFloat;
     //printf("bytes = [ 0x%x, 0x%x, 0x%x, 0x%x ]\r\n", bytes[0], bytes[1], bytes[2], bytes[3]);
 }
 
 //Method For Delay In Seconds
-void LocalMailbox::delayBy(int amount){
+void SendIt::delayBy(int amount){
     printf("DELAY");
     for(int i = 0; i < amount; i++){ //Sleep For 30 Seconds
         usleep(800000); //One Second Delay
     }
 }
 
+
+
+void SendIt::updateDesiredSubPosition(){
+    SubPosition * nextPosition;
+    nextPosition = allSubPositions.back();
+    arduinoX = nextPosition->getPositionX();
+    arduinoY = nextPosition->getPositionY();
+    arduinoZ = nextPosition->getPositionZ();
+    allSubPositions.pop_back();
+}
+
+bool SendIt::CSVInput(){
+    std::fstream fin;
+    printf("Uploading Data\n");
+    float tempStep, tempX, tempY, tempZ;
+    fin.open("/home/morgan/Desktop/Smoker/inputtedData.csv");
+    int eof = fin.eof();
+
+    std::string tempStr[4] = {""};
+    while(eof != 1) {
+        for (int i = 0; i < 4; i++) {
+            if(i == 3) {
+                getline(fin, tempStr[i], '\n');
+            }
+            else  {
+                getline(fin, tempStr[i], ',');
+            }
+        }
+        if(tempStr[0] != ""){
+            SubPosition * step = new SubPosition(std::stof(tempStr[0]),std::stof(tempStr[1]),std::stof(tempStr[2]),std::stof(tempStr[3]));
+            allSubPositions.push_front(step);
+        }
+        eof = fin.eof();
+    }
+    fin.close();
+    printf("Exiting CSV\n");
+    return true;
+}
+
+bool SendIt::comparePointValues(){
+    if(arduinoX+.5 > receivedArduinoX && arduinoX-.5 < receivedArduinoX && arduinoY+.5 > receivedArduinoY && arduinoY-.5 < receivedArduinoY && arduinoZ+.5 > receivedArduinoZ && arduinoZ-.5 < receivedArduinoZ){
+        return true;
+    }
+    return false;
+}
