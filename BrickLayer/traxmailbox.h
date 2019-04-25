@@ -63,7 +63,7 @@ public:
     int startCal(char calType);            // Send the start calibration command
     void abortCal();            // Send the abort calibration command
     int takePoint(char calType);            // Take cal point
-    int getCalScore();          // Request cal score from TRAX and set calSucess
+    int getCalScore(char calType);          // Request cal score from TRAX and set calSucess
     int getPosition();          // Request position data (heading, pitch, roll)
     int save();                 // Send save command
     int setDefaultSettings();   // Set TRAX settings back to defaults

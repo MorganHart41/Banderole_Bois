@@ -531,7 +531,7 @@ int TraxMailbox::takePoint(char calType) {
             this->sampleCount++;
             if(this->sampleCount == 12) {
                 // All 18 calibration points taken so read for cal score
-                success = getCalScore();
+                success = getCalScore(calType);
             }
         } else {
             success = -1;   // cal point was not taken
@@ -542,7 +542,7 @@ int TraxMailbox::takePoint(char calType) {
             this->sampleCount++;
             if(this->sampleCount == 18) {
                 // All 18 calibration points taken so read for cal score
-                success = getCalScore();
+                success = getCalScore(calType);
             }
         } else {
             success = -1;   // cal point was not taken
@@ -555,7 +555,7 @@ int TraxMailbox::takePoint(char calType) {
     return success;
 }
 
-int TraxMailbox::getCalScore(){
+int TraxMailbox::getCalScore(char calType){
     std::cout << "********************************************************" << std::endl;
     std::cout << "Entering getCalScore" << std::endl;
     Command calScore = kUserCalScore;      // get call score command
@@ -578,11 +578,29 @@ int TraxMailbox::getCalScore(){
     std::cout << "Accel Float Score: " << accelFloat << std::endl;
     std::cout << "Mag Float Score: " << magFloat <<std::endl;
     // update calSuccess bool based on success of calibration
-    if(accelFloat <= 2.0 && magFloat <= 2.0) {
-        this->calSuccess = true;
+    if(calType == 'o'){
+        if(accelFloat <= 2.0 && magFloat <= 2.0) {
+            this->calSuccess = true;
+        }
+        else {
+            this->calSuccess = false;
+        }
     }
-    else {
-        this->calSuccess = false;
+    else if(calType == 'a'){
+        if(accelFloat <= 2.0) {
+            this->calSuccess = true;
+        }
+        else {
+            this->calSuccess = false;
+        }
+    }
+    else{
+        if(magFloat <= 2.0) {
+            this->calSuccess = true;
+        }
+        else {
+            this->calSuccess = false;
+        }
     }
 
     return success;
