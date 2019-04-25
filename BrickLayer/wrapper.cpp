@@ -245,7 +245,7 @@ void Wrapper:: accelMagCalibration(){
 bool Wrapper::CSVInput(){
     std::fstream fin;
     printMessage("Uploading Data");
-    fin.open("/home/morgan/Desktop/BrickLayer"
+    fin.open("/home/morgan/Desktop/FuckGit/Banderole_Bois/BrickLayer"
              "/inputtedData.csv");
     int eof = fin.eof();
 
