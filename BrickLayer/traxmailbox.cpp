@@ -123,17 +123,19 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
     //std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
     int i = 1;
     std::cout << "Please wait";
+    std::cout.flush();
     while (sizeRead == 0 || i == 1000){
         if (i%2 == 0)
         {
             std::cout << ".";
+            std::cout.flush();
         }
         usleep(100000); //0
         sizeRead = serPort.read(data, responseSize);
         i++;
     }
 
-    std::cout << std::endl << "Read In Size: " << sizeRead << std::endl;
+    //std::cout << std::endl << "Read In Size: " << sizeRead << std::endl;
     uint16_t packet_len;
     memcpy(&packet_len, &data, 2);
     packet_len = ntohs(packet_len);
