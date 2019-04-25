@@ -122,7 +122,6 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
     size_t sizeRead = serPort.read(data, responseSize);
     //std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
     int i = 1;
-<<<<<<< HEAD
     std::cout << "Please wait";
     std::cout.flush();
     while (sizeRead == 0 || i == 1000){
@@ -136,6 +135,8 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
         sizeRead = serPort.read(data, responseSize);
         i++;
     }
+
+    std::cout << std::endl;
 
     if(i >= 1000){
         std::cout <<"Too Many Read Attempts" << std::endl;
