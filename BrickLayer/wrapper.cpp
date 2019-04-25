@@ -67,7 +67,6 @@ void Wrapper::safteyDelay(){
     printMessage("STEP BACK");
     for(int i = 0; i < 5; i++){
         delayBy(1);
-        //std::cout << ".";
 }
     std::cout << std::endl;
 }

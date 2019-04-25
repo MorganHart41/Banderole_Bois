@@ -122,11 +122,14 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
     size_t sizeRead = serPort.read(data, responseSize);
     //std::cout << "Debug: Read Attempt, Might Take Some Time" << std::endl;
     int i = 1;
-    std::cout << "Please wait" << endl;
+
+    std::cout << "Please wait";
+    std::cout.flush();
     while (sizeRead == 0 || i == 1000){
         if (i%2 == 0)
         {
             std::cout << ".";
+            std::cout.flush();
         }
 
         usleep(100000); //0
@@ -134,12 +137,15 @@ int TraxMailbox::read_command(Command &resp, uint8_t *payload, const uint16_t ma
         i++;
     }
 
+
+    std::cout << std::endl;
+
     if(i >= 1000){
         std::cout <<"Too Many Read Attempts" << std::endl;
         return -1;
     }
-    std::cout << "Read In Size: " << sizeRead << std::endl;
 
+    //std::cout << "Read In Size: " << sizeRead << std::endl;
     uint16_t packet_len;
     memcpy(&packet_len, &data, 2);
     packet_len = ntohs(packet_len);
@@ -559,7 +565,7 @@ int TraxMailbox::getCalScore(){
 
     int success = 0;
 
-    success = read_command(readResp, payloadRead, 24, 29);   // ** LOOK AT THIS LATER - 6 should be 24? ***
+    success = read_command(readResp, payloadRead, 24, 29);
 
     uint8_t accelScore[4];
     uint8_t magScore[4];
@@ -698,13 +704,10 @@ float createFloat(uint8_t data[])
 
    int exponentBits[8] = {byte2[7], byte1[0], byte1[1], byte1[2], byte1[3], byte1[4], byte1[5], byte1[6]};
    float exponent = BitToDec(exponentBits, 8); //used to convert from bits to a decimal value
-   //std::cout << exponent << std::endl;
 
+   //Mantissa was constructed using the TRAX user manual specificatoins along with IEE standards for constructing a 32 bit float
    int mantissaBits[23] = {byte4[0],byte4[1],byte4[2],byte4[3],byte4[4],byte4[5],byte4[6],byte4[7],byte3[0],byte3[1],byte3[2],byte3[3],byte3[4],byte3[5],byte3[6],byte3[7],byte2[0],byte2[1],byte2[2],byte2[3],byte2[4],byte2[5],byte2[6]};
    float mantissa = createMantissa(mantissaBits);
-   //std::cout << mantissa << std::endl;
-   //float OnePointMantissa = shrinkMantissa(mantissa); //used to get mantissa down to a value less than 1
-   //std::cout << OnePointMantissa << std::endl;
 
    float actualFloatValue = ((pow(2,(exponent - 127)))*(mantissa));
 
@@ -712,18 +715,14 @@ float createFloat(uint8_t data[])
    {
        actualFloatValue = (actualFloatValue*(-1));
    }
-   //std::cout << byte1[1] << std::endl;
 
 
-   //std::cout << actualFloatValue << std::endl;
 
    return actualFloatValue;
-   //printf("%d\n", s);
-   //float number = ((-1)(data[0]))
 }
 
 
-float createMantissa(int *mantissa)
+float createMantissa(int *mantissa) //creates a mantissa using IEE standards
 {
    float number = 0.000000000;
    for(int i = 0; i < 23; i++)
@@ -734,7 +733,7 @@ float createMantissa(int *mantissa)
    return number;
 }
 
-void splitCalScore(uint8_t data[], uint8_t * AccelScore, uint8_t *MagScore)
+void splitCalScore(uint8_t data[], uint8_t * AccelScore, uint8_t *MagScore) //splits the read in payload into two arrays holding mag and accel scores
 {
     int a = 0;
     for(int i = 0; i < 4; i++)
@@ -751,7 +750,7 @@ void splitCalScore(uint8_t data[], uint8_t * AccelScore, uint8_t *MagScore)
 }
 
 
-float BitToDec(int data[], int length)
+float BitToDec(int data[], int length) //converts bits to a decimal number
 {
     float sum = 0;
     for(int i = 0; i < length; i++)
@@ -816,7 +815,7 @@ int combine(int a, int b) {
    return a*times + b;
 }
 
-int combineData(uint8_t data[])
+int combineData(uint8_t data[]) //combines 4 bytes of data together
 {
     int first = combine(data[0],data[1]);
     int second = combine(data[2], data[3]);
