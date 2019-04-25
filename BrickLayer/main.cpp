@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
         char userChoice = w.automatedOrManual();
 
             loop = 0;
-
         if(userChoice == 'a'){
             w.CSVInput();
             w.automatedLogic();

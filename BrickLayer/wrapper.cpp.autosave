@@ -67,6 +67,7 @@ void Wrapper::safteyDelay(){
     printMessage("STEP BACK");
     for(int i = 0; i < 5; i++){
         delayBy(1);
+        //std::cout << ".";
 }
     std::cout << std::endl;
 }
@@ -144,7 +145,7 @@ void Wrapper::automatedLogic(){
 }
 
 char Wrapper::accelOrMagOrAccelMag(){
-    printMessage("Enter 'a' For Accel Calibration 'm' For Mag Calibration or 'o' For AccelMag Calibration");
+    printMessage("Enter 'a' For Accel Calibration 'm' For Mag Calibration or 'am' For AccelMag Calibration");
     std::string tempString;
     while(true){
         std::getline(std::cin,tempString);
@@ -156,12 +157,12 @@ char Wrapper::accelOrMagOrAccelMag(){
             printMessage("Mag Calibration Selected");
             return 'm';
         }
-        else if (tempString == "o"){
+        else if (tempString == "am"){
             printMessage("AccelMag Calibration Selected");
             return 'o';
         }
         else{
-            printMessage("Please Type Either 'm' or 'a' or 'o'");
+            printMessage("Please Type Either 'm' or 'a' or 'am'");
         }
     }
 }
@@ -211,6 +212,7 @@ void Wrapper::magCalibration(){
 }
 
 void Wrapper:: accelMagCalibration(){
+
     while(1){
         printMessage("********************************************************");
         enterButtonDelay();
@@ -290,11 +292,7 @@ bool Wrapper::startTraxCalibration(char userChoice){
     printMessage("********************************************************");
     printMessage("startCal: ");
     try{ //Try A startCal
-        int startCalCheck = tm.startCal(userChoice);
-        if(startCalCheck == -1){
-            return false;
-        }
-
+        tm.startCal(userChoice);
         return true; //Positive Return
     }
     catch(...){
