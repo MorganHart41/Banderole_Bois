@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
                         i++;
                         if(i >= 10){
                             w.printMessage("The TRAX has failed initialization 10 times. Please power cycle the TRAX and try again");
+                            return 0;
                         }
                         success = w.calibrationInit(userChoice2);
                     }while(!success);
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
                         i++;
                         if(i >= 10){
                             w.printMessage("The TRAX has failed initialization 10 times. Please power cycle the TRAX and try again");
+                            return 0;
                         }
                         success = w.calibrationInit(userChoice2);
 
@@ -54,6 +56,7 @@ int main(int argc, char *argv[])
                         i++;
                         if(i >= 10){
                             w.printMessage("The TRAX has failed initialization 10 times. Please power cycle the TRAX and try again");
+                            return 0;
                         }
                         success = w.calibrationInit(userChoice2);
                     }while(!success);
