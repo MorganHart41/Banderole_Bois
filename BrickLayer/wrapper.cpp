@@ -185,6 +185,9 @@ void Wrapper::accelCalibration(){
                 }
             }
         }
+        else{
+            tm.abortCal();
+        }
     }
 }
 
@@ -193,7 +196,7 @@ void Wrapper::magCalibration(){
         printMessage("********************************************************");
         enterButtonDelay();
         if(takeTraxPoint('m')){ //12
-            if(tm.getSampleCount() == 12){
+            if(checkFinalStep('m')){
                 printMessage("********************************************************");
                 if(getTraxCalScore()){ //Change To Grab Variable?
                     if(setDefaultTraxSettings()){
@@ -207,10 +210,14 @@ void Wrapper::magCalibration(){
                 }
             }
         }
+        else{
+            tm.abortCal();
+        }
     }
 }
 
 void Wrapper:: accelMagCalibration(){
+
     while(1){
         printMessage("********************************************************");
         enterButtonDelay();
@@ -228,6 +235,9 @@ void Wrapper:: accelMagCalibration(){
                     break;
                 }
             }
+        }
+        else{
+            tm.abortCal();
         }
     }
 }
